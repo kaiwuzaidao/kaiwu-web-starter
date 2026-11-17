@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kaiwu-purchase-desk
+spec:
+  rules:
+    - host: kaiwu.example.com
+      http:
+        paths:
+          - path: /apps/purchase-desk/
+            pathType: Prefix
+            backend:
+              service:
+                name: kaiwu-purchase-desk-web
+                port: { number: 8080 }
+          # 只访问同 namespace 的 Gateway 别名；别名指向平台 Gateway 的完整集群域名。
+          - path: /purchase-desk-api/
+            pathType: Prefix
+            backend:
+              service:
+                name: kaiwu-platform-gateway
+                port: { number: 8088 }

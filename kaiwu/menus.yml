@@ -1,0 +1,31 @@
+- type: MENU
+  name: 采购申请
+  path: /requests
+  children:
+    - type: BUTTON
+      name: 查看
+      permission: purchase:request:list
+    - type: BUTTON
+      name: 编辑
+      permission: purchase:request:save
+    - type: BUTTON
+      name: 删除
+      permission: purchase:request:delete
+    - type: BUTTON
+      name: 提交
+      permission: purchase:request:submit
+    - type: BUTTON
+      name: 批准
+      permission: purchase:request:approve
+    - type: BUTTON
+      name: 驳回
+      permission: purchase:request:reject
+    - type: BUTTON
+      name: 大额批准
+      permission: purchase:request:approve-large
+    - type: BUTTON
+      name: 导入流程定义
+      permission: workflow:definition:manage
+    - type: BUTTON
+      name: 管理流程文档模板
+      permission: workflow:document:manage

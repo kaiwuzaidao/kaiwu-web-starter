@@ -1,0 +1,12 @@
+- roleCode: applicant
+  name: 申请人
+  routes: [/requests]
+  permissions: [purchase:request:list, purchase:request:save, purchase:request:delete, purchase:request:submit]
+- roleCode: manager
+  name: 审批经理
+  routes: [/requests]
+  permissions: [purchase:request:list, purchase:request:approve, purchase:request:reject]
+- roleCode: general-manager
+  name: 总经理
+  routes: [/requests]
+  permissions: [purchase:request:list, purchase:request:approve, purchase:request:reject]

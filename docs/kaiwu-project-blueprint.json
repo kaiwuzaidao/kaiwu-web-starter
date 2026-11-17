@@ -1,0 +1,22 @@
+{
+  "contractVersion": "1",
+  "templateVersion": "kaiwu-product-web-v2",
+  "projectId": "",
+  "projectCode": "purchase-desk",
+  "generationMode": "ADOPT_FRONTEND",
+  "designSummary": "采购申请、角色权限与分级审批演示。",
+  "supportedLocales": [
+    "zh-CN"
+  ],
+  "modules": [
+    {
+      "moduleCode": "requests",
+      "permissionPrefix": "purchase:request",
+      "accessScope": "OWNER_ONLY",
+      "apiPath": "/api/v1/requests",
+      "primaryKey": "id"
+    }
+  ],
+  "projectName": "采购工作台",
+  "manifestOwner": "frontend"
+}

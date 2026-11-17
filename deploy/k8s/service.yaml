@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kaiwu-purchase-desk-web
+spec:
+  selector:
+    app: kaiwu-purchase-desk-web
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

@@ -1,0 +1,10 @@
+name: kaiwu-purchase-desk-web
+
+services:
+  kaiwu-purchase-desk-web:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${BUSINESS_WEB_PORT:-8498}:8080"

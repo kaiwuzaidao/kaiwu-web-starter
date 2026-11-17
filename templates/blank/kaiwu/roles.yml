@@ -1,0 +1,4 @@
+- roleCode: member
+  name: 演示成员
+  routes: []
+  permissions: []

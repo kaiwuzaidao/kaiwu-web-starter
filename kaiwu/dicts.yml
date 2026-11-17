@@ -1,0 +1,7 @@
+- dictCode: purchase.request_status
+  name: 采购申请状态
+  items:
+    - {value: DRAFT, label: 草稿}
+    - {value: PENDING, label: 待审批, color: processing}
+    - {value: APPROVED, label: 已批准, color: success}
+    - {value: REJECTED, label: 已驳回, color: error}

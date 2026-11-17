@@ -1,0 +1,77 @@
+{
+  "name": "kaiwu-purchase-desk-web",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "max dev",
+    "build": "max build && node scripts/check-dist.mjs",
+    "typecheck": "tsc --noEmit",
+    "check:dict": "node scripts/check-dict-consistency.mjs",
+    "check:perm": "node scripts/check-permission-consistency.mjs",
+    "check:log": "node scripts/check-log-redaction.mjs",
+    "check:constraints": "sh scripts/check-constraints.sh",
+    "format": "prettier --write \"{config,scripts,src,mock,mock-support,tests}/**/*.{js,cjs,mjs,ts,tsx}\" \"*.{js,json,ts}\"",
+    "format:check": "prettier --check \"{config,scripts,src,mock,mock-support,tests}/**/*.{js,cjs,mjs,ts,tsx}\" \"*.{js,json,ts}\"",
+    "audit:prod": "pnpm audit --prod --audit-level high",
+    "verify": "pnpm check:perm && pnpm verify:mock",
+    "setup": "max setup",
+    "postinstall": "max setup",
+    "dev:real": "node scripts/dev-real.cjs",
+    "check:product": "node scripts/check-kaiwu-sdk.mjs && node scripts/check-product.mjs",
+    "test:scenarios": "node --test tests/scenarios.test.mjs",
+    "test:proxy": "node tests/real-proxy.mjs",
+    "test:browser": "node tests/browser.mjs",
+    "verify:mock": "pnpm typecheck && pnpm check:dict && pnpm check:product && pnpm check:log && pnpm check:constraints && pnpm format:check && pnpm build"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.5.1",
+    "@ant-design/pro-components": "^2.8.2",
+    "@umijs/max": "^4.6.82",
+    "antd": "^5.22.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.0",
+    "@types/node": "^26.1.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "dotenv": "^17.4.2",
+    "prettier": "3.9.6",
+    "typescript": "^5.6.3",
+    "js-yaml": "3.15.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "@umijs/max>@umijs/lint": "-",
+      "@umijs/max>eslint": "-",
+      "@umijs/max>stylelint": "-",
+      "@umijs/preset-umi>@stagewise/toolbar": "-",
+      "@umijs/preset-umi>@umijs/bundler-mako": "-",
+      "@umijs/bundler-vite>vite": "6.4.4",
+      "@umijs/preset-umi>path-to-regexp": "1.9.0",
+      "@ant-design/pro-layout>path-to-regexp": "8.4.0",
+      "isomorphic-fetch>node-fetch": "2.6.7",
+      "brace-expansion": "5.0.11",
+      "fast-uri": "3.1.7",
+      "follow-redirects": "1.16.2",
+      "js-yaml": "3.15.2",
+      "less": "4.8.1",
+      "svgo": "2.8.4",
+      "nanoid": "3.3.18",
+      "@umijs/preset-umi>@umijs/bundler-utoopack": "-",
+      "@umijs/preset-umi>@umijs/history": "-",
+      "axios": "0.34.0",
+      "immer": "9.0.21",
+      "probe-image-size": "7.4.0",
+      "source-map-js": "1.2.2"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-vfj7-8cjw-p6xm"
+      ]
+    }
+  },
+  "packageManager": "pnpm@10.8.0"
+}

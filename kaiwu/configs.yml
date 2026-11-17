@@ -1,0 +1,4 @@
+- key: app.admin.label
+  type: STRING
+  default: 采购工作台
+  description: 侧栏名称

@@ -1,0 +1,9 @@
+businessType: purchase_request
+initiatePermission: purchase:request:submit
+pageKey: purchaseRequestDetail
+pattern: amount-tiered
+params:
+  amountField: amount
+  threshold: "100000.00"
+  approverRoles: [manager]
+  escalationRoles: [general-manager]

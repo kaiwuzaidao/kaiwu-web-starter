@@ -1,0 +1,405 @@
+import {
+  AppstoreOutlined,
+  CheckCircleFilled,
+  IdcardOutlined,
+  LogoutOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import { useIntl, useSelectedRoutes } from '@umijs/max';
+import {
+  App,
+  Avatar,
+  Button,
+  Dropdown,
+  Empty,
+  Modal,
+  Segmented,
+  Skeleton,
+  Tag,
+  Typography,
+} from 'antd';
+import { useEffect, useState } from 'react';
+import LineIcon from '@/components/LineIcon';
+import GlobalSearch from '@/components/GlobalSearch';
+import NotificationBell from '@/components/NotificationBell';
+import { useKaiwuSession } from '@/kaiwu';
+import { readProjectId } from '@/kaiwu';
+import {
+  fetchCurrentUser,
+  fetchMyProjects,
+  gotoPlatform,
+  type PlatformProjectSummary,
+  type PlatformUser,
+} from '@/kaiwu';
+
+/**
+ * 顶部操作栏（V5，与平台顶栏一致）：切换项目、全局搜索、站内信与当前用户。
+ *
+ * 桌面端放在内容区顶部的 DesktopHeader 里，窄屏由 ProLayout 自带头部渲染。
+ * 切换项目放在最前面：它是跨项目工作时的高频动作，藏进头像下拉要点两次。
+ *
+ * 语言切换不在此提供：本应用 supportedLocales 只有 zh-CN，且语言跟随平台
+ * 账户偏好（见 config.ts），子应用不另设入口。
+ */
+export default function RightContent() {
+  const user = usePlatformUser();
+  const [switching, setSwitching] = useState(false);
+
+  return (
+    <div className="kaiwu-header-actions">
+      <Button
+        className="kaiwu-project-context"
+        icon={<LineIcon name="layers" size={14} />}
+        onClick={() => setSwitching(true)}
+      >
+        <span className="kaiwu-header-action-label">切换项目</span>
+        <LineIcon name="down" size={14} className="kaiwu-header-caret" />
+      </Button>
+      <GlobalSearch />
+      <NotificationBell />
+      <UserMenu user={user} />
+      <ProjectSwitcher open={switching} onClose={() => setSwitching(false)} />
+    </div>
+  );
+}
+
+/** 读取平台当前用户；取不到时只是不显示用户信息，不影响业务功能。 */
+function usePlatformUser() {
+  const [user, setUser] = useState<PlatformUser>();
+  useEffect(() => {
+    void fetchCurrentUser()
+      .then(setUser)
+      .catch(() => undefined);
+  }, []);
+  return user;
+}
+
+/** 桌面端顶栏：左侧「分组 / 页面」面包屑，右侧操作区。 */
+export function PageBreadcrumb() {
+  const intl = useIntl();
+  const routes = useSelectedRoutes();
+  // 菜单文案键与 Umi 布局一致：menu.<父级>.<子级>。
+  const names: string[] = [];
+  const labels = routes
+    .map(({ route }) => (route as { name?: string }).name)
+    .filter((name): name is string => Boolean(name))
+    .map((name) => {
+      names.push(name);
+      return intl.formatMessage({ id: `menu.${names.join('.')}`, defaultMessage: name });
+    });
+  const current = labels[labels.length - 1];
+  const group = labels.length > 1 ? labels[labels.length - 2] : undefined;
+  return (
+    <div className="kaiwu-page-breadcrumb">
+      <div className="kaiwu-header-breadcrumb">
+        {group && (
+          <>
+            <span>{group}</span>
+            <span>/</span>
+          </>
+        )}
+        <strong>{current}</strong>
+      </div>
+    </div>
+  );
+}
+
+/** 账号与 System 一致，统一从右上角进入个人中心和退出登录。 */
+function UserMenu({ user }: { user?: PlatformUser }) {
+  const { logout } = useKaiwuSession();
+  const { modal, message } = App.useApp();
+  const name = user?.displayName || user?.username || '';
+
+  const onSignOut = () => {
+    modal.confirm({
+      title: '确认退出登录？',
+      okText: '退出',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await logout();
+        } catch {
+          // 登出接口失败也要跳回平台，避免停留在已失效的会话里。
+          message.error('退出登录请求失败，将返回平台');
+        }
+      },
+    });
+  };
+
+  // 切换项目不放进这里：顶栏已有独立入口，两处重复只是噪音。
+  return (
+    <Dropdown
+      placement="bottomRight"
+      trigger={['click']}
+      menu={{
+        items: [
+          { key: 'profile', icon: <IdcardOutlined />, label: '个人中心' },
+          { type: 'divider' },
+          { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', danger: true },
+        ],
+        onClick: ({ key }) => {
+          if (key === 'profile') gotoPlatform('/profile');
+          if (key === 'logout') onSignOut();
+        },
+      }}
+    >
+      <button type="button" className="kaiwu-user-menu kaiwu-header-account" aria-label="个人中心">
+        <Avatar
+          size={26}
+          style={{ background: '#2563eb', color: '#fff' }}
+          icon={!name ? <UserOutlined /> : undefined}
+        >
+          {name ? name.slice(0, 1) : undefined}
+        </Avatar>
+        <span className="kaiwu-user-menu-copy">
+          <Typography.Text ellipsis={{ tooltip: name }}>{name || '未登录'}</Typography.Text>
+        </span>
+      </button>
+    </Dropdown>
+  );
+}
+
+/** 平台自身在 sys_project 里是 built_in 项目，入口就是平台根路径，没有 backend_url。 */
+const PLATFORM_ENTRY_PATH = '/';
+
+/**
+ * 去别的业务后台一律经平台的宿主页，而不是直接跳它的 backendUrl。
+ *
+ * 令牌只存在内存，靠向 opener/parent 发 postMessage 索取；顶层直达的页面两者都
+ * 没有，进去必然 401。宿主页会把目标装进同源 iframe，桥接才成立。
+ */
+function projectWorkspacePath(projectId: string): string {
+  return `/workspace/${encodeURIComponent(projectId)}`;
+}
+
+/**
+ * 打开方式偏好。与平台同源，共用同一个 localStorage 键——在平台上选了「新标签页」，
+ * 进到子应用里的切换器也应该是新标签页，不该出现两套各记各的。
+ */
+type ProjectOpenMode = 'inline' | 'newTab';
+
+const OPEN_MODE_KEY = 'kaiwu.projectOpenMode';
+
+function readOpenMode(): ProjectOpenMode {
+  try {
+    return window.localStorage.getItem(OPEN_MODE_KEY) === 'newTab' ? 'newTab' : 'inline';
+  } catch {
+    return 'inline';
+  }
+}
+
+function writeOpenMode(mode: ProjectOpenMode): void {
+  try {
+    window.localStorage.setItem(OPEN_MODE_KEY, mode);
+  } catch {
+    // 存不下就只在本次会话生效，不影响切换本身。
+  }
+}
+
+/**
+ * 切换目标要换掉的是最外层窗口。
+ *
+ * 本应用可能正跑在平台宿主页的 iframe 里，这时改 window.location 只会把新页面
+ * 套进同一个 iframe——平台里嵌平台。同源，可以直接拿 top。
+ */
+function navigateTop(href: string): void {
+  const top = window.top ?? window;
+  top.location.href = href;
+}
+
+/** 新标签页必须保留 opener：那正是子应用取令牌的对端，不能加 noopener。 */
+function openTarget(href: string, mode: ProjectOpenMode): void {
+  if (mode === 'newTab') {
+    window.open(href, '_blank');
+    return;
+  }
+  navigateTop(href);
+}
+
+type SwitchTarget = {
+  key: string;
+  name: string;
+  caption: string;
+  href: string;
+  current: boolean;
+  platform: boolean;
+};
+
+/**
+ * 项目切换弹窗。平台端的"切换项目"是跳回工作台挑选，但子应用没有工作台，
+ * 跳出去再点回来要两跳；这里直接列出有权访问的去处，一步到位。
+ *
+ * 三个容易踩的点：
+ * 1. 平台（built_in）必须在列表里。它是"回到 Kaiwu System"的唯一入口，
+ *    早先按子应用模型过滤掉了 built_in，导致有 system 权限也切不回去。
+ * 2. 平台没有 backend_url，不能按"无 backendUrl 即无处可去"一并滤掉，
+ *    它走 PLATFORM_ENTRY_PATH。
+ * 3. 子应用靠 query 上的 projectId 认项目（见 useProjectId），跳转必须带上，
+ *    否则进去是一个没有项目上下文的空壳。
+ */
+function ProjectSwitcher({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState<PlatformProjectSummary[]>();
+  const [openMode, setOpenMode] = useState<ProjectOpenMode>('inline');
+  const currentProjectId = readProjectId();
+
+  // 偏好读在打开弹窗时，而不是组件挂载时：平台那边可能刚改过。
+  useEffect(() => {
+    if (open) setOpenMode(readOpenMode());
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    setLoading(true);
+    void fetchMyProjects()
+      .then((data) => setProjects(data ?? []))
+      .catch(() => setProjects([]))
+      .finally(() => setLoading(false));
+  }, [open]);
+
+  const targets: SwitchTarget[] = (projects ?? [])
+    // 平台恒可进入；业务项目要有后台入口，没有 backendUrl 的点了也无处可去。
+    .filter((p) => p.builtIn || p.backendUrl)
+    .map((p) => ({
+      key: p.id,
+      name: p.projectName,
+      caption: p.builtIn ? '平台控制台' : p.backendLabel || p.projectCode,
+      href: p.builtIn ? PLATFORM_ENTRY_PATH : projectWorkspacePath(p.id),
+      current: !p.builtIn && p.id === currentProjectId,
+      platform: p.builtIn,
+    }))
+    // 平台置顶，其余保持后端给的顺序。
+    .sort((a, b) => Number(b.platform) - Number(a.platform));
+
+  return (
+    <Modal
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      title={
+        // 与平台端同一个位置：标题行右侧，右留 32px 给关闭按钮。
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            paddingRight: 32,
+          }}
+        >
+          <span>切换项目</span>
+          <Segmented<ProjectOpenMode>
+            size="small"
+            value={openMode}
+            onChange={(value) => {
+              setOpenMode(value);
+              writeOpenMode(value);
+            }}
+            options={[
+              { value: 'inline', label: '当前页面' },
+              { value: 'newTab', label: '新标签页' },
+            ]}
+          />
+        </div>
+      }
+      width={640}
+      styles={{ body: { paddingTop: 8 } }}
+    >
+      <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 16 }}>
+        选择要进入的项目后台，或返回平台控制台。
+      </Typography.Paragraph>
+      {loading ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} active avatar paragraph={{ rows: 1 }} />
+          ))}
+        </div>
+      ) : targets.length === 0 ? (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description="没有可进入的项目后台，请联系管理员开通"
+        />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+          {targets.map((item) => (
+            <SwitchCard key={item.key} item={item} mode={openMode} />
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+function SwitchCard({ item, mode }: { item: SwitchTarget; mode: ProjectOpenMode }) {
+  const [hover, setHover] = useState(false);
+  const active = hover && !item.current;
+
+  return (
+    <div
+      role="button"
+      tabIndex={item.current ? -1 : 0}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={() => {
+        if (!item.current) openTarget(item.href, mode);
+      }}
+      onKeyDown={(e) => {
+        if (item.current) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openTarget(item.href, mode);
+        }
+      }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: 16,
+        borderRadius: 8,
+        cursor: item.current ? 'default' : 'pointer',
+        border: `1px solid ${active ? '#3B82F6' : '#E5EBF3'}`,
+        background: item.current ? '#F7FAFC' : '#fff',
+        boxShadow: active ? '0 4px 12px rgba(59,130,246,0.12)' : 'none',
+        transition: 'border-color .2s, box-shadow .2s',
+      }}
+    >
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          flexShrink: 0,
+          borderRadius: 8,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 16,
+          fontWeight: 600,
+          color: item.platform ? '#fff' : '#2563EB',
+          background: item.platform ? '#1C3C6C' : '#EFF6FF',
+        }}
+      >
+        {item.platform ? <AppstoreOutlined /> : item.name.slice(0, 1)}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Typography.Text strong ellipsis style={{ minWidth: 0 }}>
+            {item.name}
+          </Typography.Text>
+          {item.current && (
+            <Tag color="processing" style={{ marginInlineEnd: 0, flexShrink: 0 }}>
+              当前
+            </Tag>
+          )}
+        </div>
+        <Typography.Text
+          type="secondary"
+          ellipsis
+          style={{ fontSize: 12, display: 'block', minWidth: 0 }}
+        >
+          {item.caption}
+        </Typography.Text>
+      </div>
+      {item.current && <CheckCircleFilled style={{ color: '#3B82F6', flexShrink: 0 }} />}
+    </div>
+  );
+}

@@ -1,0 +1,9 @@
+node_modules/
+.pnpm-store/
+.umi/
+.umi-production/
+dist/
+.idea/
+.vscode/
+.env
+.env.*
