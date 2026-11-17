@@ -122,3 +122,38 @@ it('初始化默认空白、按需采购，两种项目的权限和规则门禁�
     rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+it('设备预约示例沿用调用方项目编码，独立于空白与历史项目', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'kaiwu-booking-'));
+  try {
+    const dest = join(tmp, 'studio-web');
+    run(
+      process.cwd(),
+      'scripts/kaiwu-init.mjs',
+      ['--example', 'booking', '--code', 'studio', '--name', '工作室', '--dir', dest],
+      undefined,
+      {
+        ...process.env,
+        GIT_AUTHOR_NAME: 'CI',
+        GIT_AUTHOR_EMAIL: 'ci@example.org',
+        GIT_COMMITTER_NAME: 'CI',
+        GIT_COMMITTER_EMAIL: 'ci@example.org',
+      },
+    );
+    const read = (file) => readFileSync(join(dest, file), 'utf8');
+    const blueprint = JSON.parse(read('docs/kaiwu-project-blueprint.json'));
+    assert.equal(blueprint.projectName, '工作室');
+    assert.equal(blueprint.projectCode, 'studio');
+    assert.equal(blueprint.modules[0].permissionPrefix, 'equipment:booking');
+    assert.ok(blueprint.adoptionId);
+    for (const file of ['mock-support/business.ts', 'src/services/bookings.ts']) {
+      assert.match(read(file), /\/studio-api\/api\/v1\/bookings/);
+    }
+    assert.equal(existsSync(join(dest, 'src/pages/Requests')), false);
+    symlinkSync(resolve('node_modules'), join(dest, 'node_modules'), 'junction');
+    run(dest, 'scripts/check-product.mjs');
+    run(dest, 'scripts/check-permission-consistency.mjs');
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});

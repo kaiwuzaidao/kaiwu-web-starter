@@ -1,0 +1,7 @@
+- type: MENU
+  name: 设备预约
+  path: /bookings
+  children:
+    - { type: BUTTON, name: 查看, permission: 'equipment:booking:list' }
+    - { type: BUTTON, name: 预约, permission: 'equipment:booking:create' }
+    - { type: BUTTON, name: 取消, permission: 'equipment:booking:cancel' }

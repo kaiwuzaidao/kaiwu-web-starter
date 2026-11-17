@@ -9,3 +9,4 @@ tests
 .env*
 .kaiwu-starter
 templates
+dist

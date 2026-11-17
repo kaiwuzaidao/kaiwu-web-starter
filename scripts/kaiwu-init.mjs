@@ -19,13 +19,13 @@ if (
   !existsSync(join(root, '.kaiwu-starter')) ||
   !/^[a-z][a-z0-9-]{1,63}$/.test(code ?? '') ||
   code === 'system' ||
-  (example !== undefined && example !== 'purchase') ||
+  (example !== undefined && !['booking', 'purchase'].includes(example)) ||
   !name?.trim() ||
   name.length > 100 ||
   /[\x00-\x1f]/.test(name)
 )
   throw Error(
-    '用法：node scripts/kaiwu-init.mjs --code 项目编码 --name 项目名称 [--dir 新目录] [--example purchase]',
+    '用法：node scripts/kaiwu-init.mjs --code 项目编码 --name 项目名称 [--dir 新目录] [--example booking]',
   );
 const target = resolve(dir ?? join(root, '..', code + '-web'));
 if (!relative(root, target).startsWith('..' + sep) || existsSync(target))
@@ -33,6 +33,15 @@ if (!relative(root, target).startsWith('..' + sep) || existsSync(target))
 const files = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
   .split('\0')
   .filter(Boolean);
+const legacy = example === 'purchase';
+const booking = example === 'booking';
+const bookingPrefix = 'templates/booking/';
+const outputFiles = new Set(files.filter((file) => !file.startsWith('templates/')));
+if (booking) {
+  for (const file of files.filter((file) => file.startsWith(bookingPrefix))) {
+    outputFiles.add(file.slice(bookingPrefix.length));
+  }
+}
 const port =
   8400 +
   (((Array.from(code).reduce((hash, ch) => (31 * hash + ch.charCodeAt(0)) | 0, 0) % 100) + 100) %
@@ -40,21 +49,24 @@ const port =
 const exampleFiles = new Set(['src/services/requests.ts', 'mock-support/requests.ts']);
 mkdirSync(target);
 try {
-  for (const file of files) {
-    if (
-      file.startsWith('templates/') ||
-      ['.kaiwu-starter', 'scripts/kaiwu-init.mjs', 'tests/init.test.mjs'].includes(file)
-    )
+  for (const file of outputFiles) {
+    if (['.kaiwu-starter', 'scripts/kaiwu-init.mjs', 'tests/init.test.mjs'].includes(file))
       continue;
     if (
-      !example &&
+      !legacy &&
       (exampleFiles.has(file) ||
         file.startsWith('src/pages/Requests/') ||
         file.startsWith('kaiwu/workflows/purchase_request/'))
     )
       continue;
     const overlay = join(root, 'templates/blank', file);
-    const source = !example && existsSync(overlay) ? overlay : join(root, file);
+    const bookingFile = join(root, bookingPrefix, file);
+    const source =
+      booking && existsSync(bookingFile)
+        ? bookingFile
+        : !legacy && existsSync(overlay)
+          ? overlay
+          : join(root, file);
     const dest = join(target, file);
     mkdirSync(dirname(dest), { recursive: true });
     let data = readFileSync(source, 'utf8');
@@ -68,11 +80,8 @@ try {
         ...(!example && { modules: [], designSummary: '' }),
       });
       data = JSON.stringify(blueprint, null, 2) + '\n';
-    } else if (file === 'README.md' && example) {
-      data = data.replace(
-        /## 新建业务前端[\s\S]*?(?=```sh)/,
-        '## 本地演示\n\n使用 Node 20+ 和 pnpm 10。产品开发从 product 分支开始。\n\n',
-      );
+    } else if (file === 'README.md' && legacy) {
+      data = readFileSync(join(root, 'templates/legacy/README.md'), 'utf8');
     } else if (file === 'kaiwu/configs.yml') {
       data = data.replace('采购工作台', () => JSON.stringify(name));
     } else if (file !== 'pnpm-lock.yaml') {
@@ -84,7 +93,7 @@ try {
       )
         data = data.replaceAll('8498', String(port));
     }
-    writeFileSync(dest, data, { mode: statSync(join(root, file)).mode & 0o777 });
+    writeFileSync(dest, data, { mode: statSync(source).mode & 0o777 });
   }
   execFileSync('git', ['init', '-q', '-b', 'product'], { cwd: target });
   execFileSync('git', ['add', '-A'], { cwd: target });

@@ -21,11 +21,26 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
-      - name: Verify blank and purchase initialization
+      - name: Verify initialization and compatibility
         if: ${{ hashFiles('.kaiwu-starter') != '' }}
         run: node --test tests/init.test.mjs
       - run: pnpm test:scenarios
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Exercise the generated booking project
+        if: ${{ hashFiles('.kaiwu-starter') != '' }}
+        env:
+          GIT_AUTHOR_NAME: CI
+          GIT_COMMITTER_NAME: CI
+          GIT_AUTHOR_EMAIL: ci@example.org
+          GIT_COMMITTER_EMAIL: ci@example.org
+        run: |
+          demo="$RUNNER_TEMP/equipment-booking-web"
+          node scripts/kaiwu-init.mjs --code equipment-booking --name 设备预约 --example booking --dir "$demo"
+          cd "$demo"
+          pnpm install --frozen-lockfile
+          pnpm verify
+          pnpm test:scenarios
+          pnpm test:browser
       - run: pnpm test:browser
       - run: pnpm test:proxy
       - name: Confirm the production image excludes Mock

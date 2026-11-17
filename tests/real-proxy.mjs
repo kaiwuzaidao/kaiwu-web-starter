@@ -39,6 +39,16 @@ async function get(origin, path) {
     headers: { 'x-project-id': 'test-project' },
     signal: AbortSignal.timeout(4000),
   });
+  if (!response.headers.get('content-type')?.includes('json')) {
+    throw new Error(
+      path +
+        ' 期望 Gateway JSON，收到 HTTP ' +
+        response.status +
+        ' ' +
+        response.headers.get('content-type') +
+        '。请检查 KAIWU_GATEWAY 是否直连网关，以及业务 API 路由是否已配置。',
+    );
+  }
   const { timestamp, requestId, ...body } = await response.json();
   return { status: response.status, body };
 }

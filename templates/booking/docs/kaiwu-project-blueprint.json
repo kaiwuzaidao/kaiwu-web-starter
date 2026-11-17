@@ -1,0 +1,20 @@
+{
+  "contractVersion": "1",
+  "templateVersion": "kaiwu-product-web-v2",
+  "projectId": "",
+  "projectCode": "equipment-booking",
+  "generationMode": "ADOPT_FRONTEND",
+  "designSummary": "会议室投影仪预约，员工可查看忙闲、管理自己的预约。",
+  "supportedLocales": ["zh-CN"],
+  "modules": [
+    {
+      "moduleCode": "bookings",
+      "permissionPrefix": "equipment:booking",
+      "accessScope": "OWNER_ONLY",
+      "apiPath": "/api/v1/bookings",
+      "primaryKey": "id"
+    }
+  ],
+  "projectName": "设备预约",
+  "manifestOwner": "frontend"
+}

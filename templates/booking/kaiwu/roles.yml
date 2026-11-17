@@ -1,0 +1,4 @@
+- roleCode: member
+  name: 员工
+  routes: [/bookings]
+  permissions: [equipment:booking:list, equipment:booking:create, equipment:booking:cancel]
