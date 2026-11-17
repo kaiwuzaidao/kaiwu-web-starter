@@ -4,6 +4,8 @@
 
 ## 新建业务前端
 
+产品人员可以克隆本仓库，在仓库目录打开自己的 AI 编程工具，输入一句需求。例如：“做一个物资领用前端，可以登记物资和正整数数量，刷新后还看得到。请新建业务前端，用 Mock 跑起来并给我演示地址。”本地演示只需 Node、pnpm 和 Git。
+
 默认建立空白业务前端。例如运行 `node scripts/kaiwu-init.mjs --code inventory --name 库存管理`，再进入旁边新建的 `inventory-web`。需要采购样例时，初始化命令加 `--example purchase`。新仓当前分支为 `product`。产品可以直接把新仓交给自己的 AI 工具。使用 Node 20+、pnpm 10 和 Git。首次建仓使用当前 Git 姓名和邮箱，提交前可用 `git var GIT_AUTHOR_IDENT` 核对。
 
 ```sh
