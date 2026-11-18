@@ -71,11 +71,31 @@ const rules = read('docs/business-rules.md'),
   handlers = sources('mock-support') + '\n' + sources('mock'),
   tests = read('tests/scenarios.test.mjs');
 const ids = (s, re) => new Set(s.match(re) ?? []);
-const ruleIds = ids(rules, /\b[A-Z][A-Z0-9]*-\d+\b/g);
+const ruleIds = new Set(
+  [...rules.matchAll(/^\s*(?:\|\s*|[-*]\s+)?\*{0,2}([A-Z][A-Z0-9]*-\d+)\b/gm)].map((m) => m[1]),
+);
 if (blueprint.modules.length) assert(ruleIds.size > 0, '业务模块需要规则');
 assert.deepEqual(ids(handlers, /\b[A-Z][A-Z0-9]*-\d+\b/g), ruleIds, 'Mock 与规则编号不一致');
-assert.deepEqual(ids(scenarios, /\b[A-Z][A-Z0-9]*-\d+\b/g), ruleIds, '场景与规则编号不一致');
-const scenarioIds = ids(scenarios, /\bS\d{2,}\b/g);
+const covered = new Set();
+const scenarioIds = new Set();
+for (const row of scenarios.split('\n')) {
+  const match = row.match(/^\s*(?:\|\s*|[-*]\s+)?(S\d{2,})\b/);
+  if (!match) continue;
+  const id = match[1];
+  assert(!scenarioIds.has(id), '重复场景 ' + id);
+  scenarioIds.add(id);
+  const refsColumn = row.trim().startsWith('|')
+    ? row.trim().replace(/\|$/, '').split('|').at(-1)
+    : row;
+  const refs = ids(refsColumn, /\b[A-Z][A-Z0-9]*-\d+\b/g);
+  assert(refs.size, id + ' 缺少规则引用');
+  for (const ref of refs) {
+    assert(ruleIds.has(ref), id + ' 引用未知规则 ' + ref);
+    covered.add(ref);
+  }
+}
+assert.deepEqual(covered, ruleIds, '场景与规则编号不一致');
+
 if (blueprint.modules.length || ruleIds.size) assert(scenarioIds.size > 0, '业务规则需要验收场景');
 assert.deepEqual(
   new Set([...tests.matchAll(/\bit\(\s*['"](S\d{2,})\b/g)].map((m) => m[1])),

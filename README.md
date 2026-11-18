@@ -12,6 +12,14 @@ flowchart LR
   D --> E["实现业务 API 并联调"]
 ```
 
+默认开发服务仅监听 127.0.0.1。启动后访问终端本机地址下的 `/__mock/`。
+
+```sh
+node -v  # 22.x
+pnpm -v  # 10.x
+git var GIT_AUTHOR_IDENT
+```
+
 ## 新建业务前端
 
 本地演示需要 Git、Node.js 22 和 pnpm 10。首次建仓前用 `git var GIT_AUTHOR_IDENT` 检查 Git 提交身份。两条路线都从同一个起步仓开始。

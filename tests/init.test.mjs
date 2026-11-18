@@ -116,7 +116,10 @@ it('初始化默认空白、按需采购，两种项目的权限和规则门禁�
         'tests/scenarios.test.mjs',
         "import {it} from 'node:test';\nit('S01 拒绝负库存',()=>{});\n",
       );
+      write('docs/business-rules.md', 'INV-01 库存说明允许 UTF-16 文本');
       run(dest, 'scripts/check-product.mjs');
+      write('docs/acceptance-scenarios.md', '| S01 | 负库存 | INV-01 |\n| S02 | 空白规则引用 |  |');
+      run(dest, 'scripts/check-product.mjs', [], /S02 缺少规则引用/);
     }
   } finally {
     rmSync(tmp, { recursive: true, force: true });

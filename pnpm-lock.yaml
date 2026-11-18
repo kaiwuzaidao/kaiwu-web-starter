@@ -22,11 +22,16 @@ overrides:
   svgo: 2.8.4
   nanoid: 3.3.18
   '@umijs/preset-umi>@umijs/bundler-utoopack': '-'
+  '@umijs/preset-umi>@umijs/history': '-'
   axios: 0.34.0
   immer: 9.0.21
   probe-image-size: 7.4.0
   source-map-js: 1.2.2
-  '@umijs/preset-umi>@umijs/history': '-'
+
+patchedDependencies:
+  '@umijs/bundler-webpack@4.6.82':
+    hash: 20c7e48b5589d323b68fe6848b7aa651ebd85f2fcf7f8c2188a242be8f4d7fdd
+    path: patches/umi-webpack-dev-host.patch
 
 importers:
 
@@ -51,9 +56,6 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
     devDependencies:
-      js-yaml:
-        specifier: 3.15.2
-        version: 3.15.2
       '@playwright/test':
         specifier: ^1.62.0
         version: 1.62.0
@@ -69,6 +71,9 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+      js-yaml:
+        specifier: 3.15.2
+        version: 3.15.2
       prettier:
         specifier: 3.9.6
         version: 3.9.6
@@ -3478,6 +3483,7 @@ packages:
 
   node-abort-controller@3.1.1:
     resolution: {integrity: sha512-AGK2yQKIjRuqnc6VkX2Xj5d+QW8xZ87pa1UK6yA6ouUyuxfHuMP6umE5QK7UmTeOAymo+Zx1Fxiuw9rVx8taHQ==}
+    deprecated: This package is no longer needed on supported Node.js versions. Node.js 16+ includes AbortController and AbortSignal as built-in globals. All Node.js versions requiring this polyfill are end-of-life. Use the built-in globals instead.
 
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
@@ -6910,7 +6916,7 @@ snapshots:
     dependencies:
       '@svgr/core': 6.5.1
       '@umijs/bundler-utils': 4.6.82
-      '@umijs/bundler-webpack': 4.6.82(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))
+      '@umijs/bundler-webpack': 4.6.82(patch_hash=20c7e48b5589d323b68fe6848b7aa651ebd85f2fcf7f8c2188a242be8f4d7fdd)(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))
       '@umijs/utils': 4.6.82
       '@vitejs/plugin-react': 4.0.0(vite@6.4.4(@types/node@26.1.2)(jiti@2.7.0)(less@4.8.1)(lightningcss@1.32.0)(sass@1.54.0)(terser@5.49.0))
       core-js: 3.34.0
@@ -6942,7 +6948,7 @@ snapshots:
       - webpack-plugin-serve
       - yaml
 
-  '@umijs/bundler-webpack@4.6.82(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))':
+  '@umijs/bundler-webpack@4.6.82(patch_hash=20c7e48b5589d323b68fe6848b7aa651ebd85f2fcf7f8c2188a242be8f4d7fdd)(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))':
     dependencies:
       '@svgr/core': 6.5.1
       '@svgr/plugin-jsx': 6.5.1(@svgr/core@6.5.1)
@@ -7099,7 +7105,7 @@ snapshots:
       '@umijs/bundler-esbuild': 4.6.82
       '@umijs/bundler-utils': 4.6.82
       '@umijs/bundler-vite': 4.6.82(@types/node@26.1.2)(jiti@2.7.0)(lightningcss@1.32.0)(postcss@8.5.25)(rollup@3.30.0)(sass@1.54.0)(terser@5.49.0)(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))
-      '@umijs/bundler-webpack': 4.6.82(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))
+      '@umijs/bundler-webpack': 4.6.82(patch_hash=20c7e48b5589d323b68fe6848b7aa651ebd85f2fcf7f8c2188a242be8f4d7fdd)(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))
       '@umijs/core': 4.6.82
       '@umijs/did-you-know': 1.0.4
       '@umijs/mfsu': 4.6.82
@@ -11351,7 +11357,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.23.6
       '@umijs/bundler-utils': 4.6.82
-      '@umijs/bundler-webpack': 4.6.82(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))
+      '@umijs/bundler-webpack': 4.6.82(patch_hash=20c7e48b5589d323b68fe6848b7aa651ebd85f2fcf7f8c2188a242be8f4d7fdd)(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))
       '@umijs/core': 4.6.82
       '@umijs/preset-umi': 4.6.82(@types/node@26.1.2)(@types/react@18.3.31)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@3.30.0)(sass@1.54.0)(terser@5.49.0)(type-fest@0.20.2)(typescript@5.9.3)(webpack@5.108.4(lightningcss@1.32.0)(postcss@8.5.25))
       '@umijs/renderer-react': 4.6.82(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

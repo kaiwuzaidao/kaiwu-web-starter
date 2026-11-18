@@ -172,7 +172,7 @@ const notEnforced = wellFormed
   .map(([code, where]) => `${code}  (前端 ${where})`);
 if (notEnforced.length > 0) {
   fail(
-    '前端在用、后端无 @RequirePermission（接口实际未受保护）：',
+    '前端在用、后端未找到对应 @RequirePermission（请核对接口实现及服务端授权）：',
     notEnforced,
     '改法：给对应 Controller 方法加注解，或修正前端权限码拼写。',
   );

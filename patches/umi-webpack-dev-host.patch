@@ -1,0 +1,15 @@
+diff --git a/dist/server/server.js b/dist/server/server.js
+--- a/dist/server/server.js
++++ b/dist/server/server.js
+@@ -220,5 +220,9 @@
+-  server.listen(port, () => {
+-    const banner = (0, import_utils.getDevBanner)(protocol, opts.host, port);
++  const bindHost = process.env.HOST || "127.0.0.1";
++  server.listen(port, bindHost, () => {
++    const banner = (0, import_utils.getDevBanner)(protocol, bindHost, port);
+     console.log(banner.before);
+     import_utils.logger.ready(banner.main);
+     console.log(banner.after);
++    if (process.env.MOCK !== "none") {
++      console.log("演示身份面板：" + protocol + "//localhost:" + server.address().port + "/__mock/");
++    }

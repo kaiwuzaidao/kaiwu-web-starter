@@ -43,6 +43,9 @@
     "js-yaml": "3.15.2"
   },
   "pnpm": {
+    "patchedDependencies": {
+      "@umijs/bundler-webpack@4.6.82": "patches/umi-webpack-dev-host.patch"
+    },
     "overrides": {
       "@umijs/max>@umijs/lint": "-",
       "@umijs/max>eslint": "-",
